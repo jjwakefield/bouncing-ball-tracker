@@ -54,6 +54,8 @@ def compute_motion_data(width, height, t, v_x, v_y, y_accel, std_x, std_y, energ
 
 
 
+
+
 if __name__=='__main__':
     width = 1200
     height = 700
@@ -66,7 +68,7 @@ if __name__=='__main__':
 
     std_x = 10
     std_y = 10
-    std_accel = 20
+    std_accel = 5
 
     energy_loss = 0.9
 

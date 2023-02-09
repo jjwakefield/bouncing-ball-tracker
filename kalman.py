@@ -133,4 +133,3 @@ class KalmanFilter2D:
         self.P = (I - K @ self.H) @ self.P
 
         return self.x[:2, 0]
-
