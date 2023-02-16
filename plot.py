@@ -31,13 +31,13 @@ class PlotKalman(QtWidgets.QMainWindow):
           self.graphWidget.addLegend(offset=(-1, 1))
 
           self.measurement_scatter = self.graphWidget.plot(self.measurement_plot[:, 0], self.measurement_plot[:, 1], 
-                                                           pen=None, symbol='x', name='Measurement')
+                                                       pen=None, symbol='x', name='Measurement')
           
           self.filtered_line = self.graphWidget.plot(self.filtered_plot[:, 0], self.filtered_plot[:, 1], 
-                                                     pen=pg.mkPen('g', width=2), name='Filtered')
+                                                     name='Filtered', pen='g')
           
           self.actual_line =  self.graphWidget.plot(self.actual_plot[:, 0], self.actual_plot[:, 1], 
-                                                    pen=pg.mkPen('r', width=2), name='Actual')
+                                                    name='Actual', pen='w')
 
           self.timer = QtCore.QTimer()
           self.timer.setInterval(update_interval)
@@ -105,14 +105,14 @@ class PlotParticleFilter(QtWidgets.QMainWindow):
                self.particle_plots += [[particles[i][0]]]
                c = (colour(), colour(), colour())
                line = self.graphWidget.plot([self.particle_plots[i][0][0]], [self.particle_plots[i][0][1]],
-                                             pen=pg.mkPen(c, width=0.2), symbol='o', symbolPen=c, symbolBrush=0.1, name=f'Particle {i+1}')
+                                             pen='c', symbol='o', symbolPen=c, symbolBrush=0.1, name=f'Particle {i+1}')
                self.particle_lines.append(line)
 
           self.measurement_scatter = self.graphWidget.plot(self.measurement_plot[:, 0], self.measurement_plot[:, 1], 
                                                            pen=None, symbol='x', symbolPen='w', symbolBrush=1, name='Measurement')
 
           self.actual_line =  self.graphWidget.plot(self.actual_plot[:, 0], self.actual_plot[:, 1], 
-                                                    pen=pg.mkPen('w', width=5), name='Actual')
+                                                    pen='w', name='Actual')
           
 
           self.timer = QtCore.QTimer()
@@ -154,14 +154,14 @@ class PlotParticleFilter(QtWidgets.QMainWindow):
 
 
 
-def live_plot_kalman(actual, measurements, filtered, x_range=[-20,120], y_range=[-1500,200], update_interval=10, full_plot=False):
+def animated_plot_kalman(actual, measurements, filtered, x_range=[-20,120], y_range=[-1500,200], update_interval=10, full_plot=False):
      app = QtWidgets.QApplication([])
      w = PlotKalman(actual, measurements, filtered, x_range, y_range, update_interval, full_plot)
      w.show()
      app.exec()
 
 
-def live_plot_particle(actual, measurements, pf, particles, x_range=[-20,120], y_range=[-1500,200], update_interval=10, full_plot=False):
+def animated_plot_particle(actual, measurements, pf, particles, x_range=[-20,120], y_range=[-1500,200], update_interval=10, full_plot=False):
      app = QtWidgets.QApplication([])
      w = PlotParticleFilter(actual, measurements, pf, particles, x_range, y_range, update_interval, full_plot)
      w.show()
