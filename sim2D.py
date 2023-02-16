@@ -1,6 +1,6 @@
 import numpy as np
 from kalman import KalmanFilter2D
-from plot import live_plot
+from plot import live_plot_kalman
 
 
 if __name__ == '__main__':
@@ -44,4 +44,4 @@ if __name__ == '__main__':
         filtered_est[i] = est
 
 
-live_plot(true_track, measurements, filtered_est)
+live_plot_kalman(true_track, measurements, filtered_est)
