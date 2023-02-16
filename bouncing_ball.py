@@ -6,6 +6,7 @@ from plot import live_plot_kalman
 from plot import live_plot_particle
 
 
+
 def compute_motion_data(width, height, t, v_x, v_y, y_accel, std_x, std_y, energy_loss, init_state):
     # Initial state
     x = init_state[0]
@@ -54,6 +55,7 @@ def compute_motion_data(width, height, t, v_x, v_y, y_accel, std_x, std_y, energ
     return path, measurements
 
 
+
 def use_kalman_filter(dt, v_x, v_y, x_accel, y_accel, std_x, std_y, std_accel, t, actual, measurements, full_plot):
     init_state = np.array([[measurements[0, 0]], 
                            [measurements[0, 1]],
@@ -76,12 +78,10 @@ def use_kalman_filter(dt, v_x, v_y, x_accel, y_accel, std_x, std_y, std_accel, t
         est = kf.update(z)
         filtered_est[i] = est
 
-
     live_plot_kalman(actual, measurements, filtered_est, 
               x_range=[0, width], y_range=[0, height], 
               update_interval=50, full_plot=full_plot)
     
-
 
 
 def use_particle_filter(width, height, v_x, v_y, y_accel, std_x, std_y, t, actual, measurements, full_plot):
@@ -131,7 +131,7 @@ if __name__=='__main__':
 
     
 
-    # use_kalman_filter(dt, v_x, v_y, x_accel, y_accel, std_x, std_y, std_accel, t, actual, measurements, full_plot=False)
+    use_kalman_filter(dt, v_x, v_y, x_accel, y_accel, std_x, std_y, std_accel, t, actual, measurements, full_plot=False)
 
-    use_particle_filter(width, height, v_x, v_y, y_accel, std_x, std_y, t, actual, measurements, full_plot=False)
+    # use_particle_filter(width, height, v_x, v_y, y_accel, std_x, std_y, t, actual, measurements, full_plot=False)
     
