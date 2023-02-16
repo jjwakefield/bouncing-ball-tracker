@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.linalg import inv
+from numpy.linalg import inv
 
 
 
