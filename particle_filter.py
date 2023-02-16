@@ -3,7 +3,6 @@ from numpy.linalg import inv
 from numpy.random import rand
 
 
-
 class ParticleFilter:
 
     def __init__(self, n_particles, init_state, std_x, std_y):
@@ -34,13 +33,23 @@ class ParticleFilter:
         '''
         Systematic resampling.
         '''
+
         N_eff = 1 / np.sum(self.weights**2)
 
+        # Resample if too few effective particles
+        print(N_eff)
         if N_eff < self.n_particles/2:
+            print(f'{N_eff:.3f} resampling...')
+            positions = (rand() + np.arange(self.n_particles)) / self.n_particles
+            indices = np.zeros(self.n_particles, dtype='i')
             cumulative_sum = np.cumsum(self.weights)
-            cumulative_sum[-1] = 1      # avoid round-off error
-            indices = np.searchsorted(cumulative_sum, rand(self.n_particles))
-            # Resample according to indices
+            i, j = 0, 0
+            while i < self.n_particles:
+                if positions[i] < cumulative_sum[j]:
+                    indices[i] = j
+                    i += 1
+                else:
+                    j += 1
             self.particles[:] = self.particles[indices]
-            self.weights.fill(1 / self.n_particles)
-            self.i += 1
+            self.weights.fill(1.0 / self.n_particles)
+            assert np.allclose(self.weights, 1/self.n_particles)
