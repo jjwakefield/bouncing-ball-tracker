@@ -1,13 +1,6 @@
 import numpy as np
 from numpy.linalg import inv
-from random import random
-
-
-# def mahalanobis_distance(particles, p, m):
-#     cov = np.cov(particles.T)
-#     mahal = (p - m).T @ inv(cov) @ (p - m)
-#     return mahal
-
+from numpy.random import rand
 
 
 
@@ -25,7 +18,7 @@ class ParticleFilter:
             self.particles[i, 0] = init_state[0] + np.random.normal(0, std_x)
             self.particles[i, 1] = init_state[1] + np.random.normal(0, std_y)
 
-
+            
     def reweight(self, m):
         cov_inv = inv(np.cov(self.particles.T))
         for i, p in enumerate(self.particles):
@@ -36,21 +29,17 @@ class ParticleFilter:
 
         self.weights /= np.sum(self.weights)
         
-
+        
     def resample(self):
         '''
         Systematic resampling.
         '''
         N_eff = 1 / np.sum(self.weights**2)
 
-        print(np.sum(self.weights**2))
-        # print(N_eff, self.n_particles/2)
-
         if N_eff < self.n_particles/2:
             cumulative_sum = np.cumsum(self.weights)
             cumulative_sum[-1] = 1      # avoid round-off error
-            indices = np.searchsorted(cumulative_sum, np.random.rand(self.n_particles))
-            # print(f'{self.i}: ok')
+            indices = np.searchsorted(cumulative_sum, rand(self.n_particles))
             # Resample according to indices
             self.particles[:] = self.particles[indices]
             self.weights.fill(1 / self.n_particles)
