@@ -2,8 +2,8 @@ from random import choice, randint
 import numpy as np
 from kalman import KalmanFilter2D
 from particle_filter import ParticleFilter
-from plot import live_plot_kalman
-from plot import live_plot_particle
+from plot import animated_plot_kalman
+from plot import animated_plot_particle
 
 
 
@@ -78,7 +78,7 @@ def use_kalman_filter(dt, v_x, v_y, x_accel, y_accel, std_x, std_y, std_accel, t
         est = kf.update(z)
         filtered_est[i] = est
 
-    live_plot_kalman(actual, measurements, filtered_est, 
+    animated_plot_kalman(actual, measurements, filtered_est, 
               x_range=[0, width], y_range=[0, height], 
               update_interval=50, full_plot=full_plot)
     
@@ -99,7 +99,7 @@ def use_particle_filter(width, height, v_x, v_y, y_accel, std_x, std_y, t, actua
 
     particle_paths = np.array(particle_paths)
 
-    live_plot_particle(actual, measurements, pf, particle_paths, 
+    animated_plot_particle(actual, measurements, pf, particle_paths, 
               x_range=[0, width], y_range=[0, height], 
               update_interval=50, full_plot=full_plot)
 
@@ -116,8 +116,8 @@ if __name__=='__main__':
     x_accel = 0
     y_accel = -1
 
-    std_x = 30
-    std_y = 30
+    std_x = 20
+    std_y = 20
     std_accel = 10
 
     energy_loss = 0.9
