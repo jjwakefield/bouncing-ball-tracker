@@ -70,14 +70,17 @@ class PlotKalman(QtWidgets.QMainWindow):
 
 
 
+
+
 class PlotParticleFilter(QtWidgets.QMainWindow):
 
-     def __init__(self, actual, measurements, pf, particles, x_range, y_range, update_interval, full_plot):
+     def __init__(self, actual, measurements, pf, x_range, y_range, update_interval, full_plot):
           super(PlotParticleFilter, self).__init__()
 
           self.full_plot = full_plot
           self.count = 0
           self.pf = pf
+          self.timestep = 0
 
           self.graphWidget = pg.PlotWidget()
           self.graphWidget.setXRange(x_range[0], x_range[1])
@@ -86,9 +89,9 @@ class PlotParticleFilter(QtWidgets.QMainWindow):
 
           self.actual = actual
           self.measurements = measurements
-          self.particles = particles
+          self.particles = pf.particles
 
-          self.n_particles = particles.shape[0]
+          self.n_particles = self.particles.shape[0]
 
           self.actual_plot = np.array([[actual[0, 0], actual[0, 1]]])
           self.measurement_plot = np.array([[measurements[0, 0], measurements[0, 1]]])
@@ -100,7 +103,7 @@ class PlotParticleFilter(QtWidgets.QMainWindow):
 
           self.particle_plots = []
           self.particle_lines = []
-          particles = particles.tolist()
+          particles = self.particles.tolist()
           for i in range(self.n_particles):
                self.particle_plots += [[particles[i][0]]]
                c = (colour(), colour(), colour())
@@ -133,21 +136,18 @@ class PlotParticleFilter(QtWidgets.QMainWindow):
                self.particles = self.particles[:, 1:, :]
                for i in range(self.n_particles):
                     new_point = [self.particles[i, 0, :].tolist()]
-                    # self.particle_plots[i] += new_point
                     self.particle_plots[i] = new_point
                     self.particle_lines[i].setData([point[0] for point in self.particle_plots[i]], [point[1] for point in self.particle_plots[i]])
 
                if self.count >= 25 and self.full_plot == False:
                     self.actual_plot = self.actual_plot[1:]
                     self.measurement_plot = self.measurement_plot[1:]
-                    # for i in range(self.n_particles):
-                    #      self.particle_plots[i] = self.particle_plots[i][1:]
 
                self.count += 1
 
-               self.pf.reweight(self.measurements[-1, :])
+               self.pf.reweight(self.measurements[-1, :], self.timestep)
                self.pf.resample()
-
+               self.timestep += 1
           except:
                pass
 
@@ -161,8 +161,8 @@ def animated_plot_kalman(actual, measurements, filtered, x_range=[-20,120], y_ra
      app.exec()
 
 
-def animated_plot_particle(actual, measurements, pf, particles, x_range=[-20,120], y_range=[-1500,200], update_interval=10, full_plot=False):
+def animated_plot_particle(actual, measurements, pf, x_range=[-20,120], y_range=[-1500,200], update_interval=10, full_plot=False):
      app = QtWidgets.QApplication([])
-     w = PlotParticleFilter(actual, measurements, pf, particles, x_range, y_range, update_interval, full_plot)
+     w = PlotParticleFilter(actual, measurements, pf, x_range, y_range, update_interval, full_plot)
      w.show()
      app.exec()

@@ -85,21 +85,20 @@ def use_kalman_filter(dt, v_x, v_y, x_accel, y_accel, std_x, std_y, std_accel, t
 
 
 def use_particle_filter(width, height, v_x, v_y, y_accel, std_x, std_y, t, actual, measurements, full_plot):
-    n_particles = 10
+    n_particles = 50
 
     pf = ParticleFilter(n_particles, actual[0], std_x, std_y)
-
-    particles = pf.particles
 
     particle_paths = []
 
     for i in range(n_particles):
-        path, _ = compute_motion_data(width, height, t, v_x, v_y, y_accel, std_x, std_y, energy_loss, particles[i])
+        path, _ = compute_motion_data(width, height, t, v_x, v_y, y_accel, std_x, std_y, energy_loss, pf.particles[i])
         particle_paths.append(path)
 
     particle_paths = np.array(particle_paths)
+    pf.particles = particle_paths
 
-    animated_plot_particle(actual, measurements, pf, particle_paths, 
+    animated_plot_particle(actual, measurements, pf, 
               x_range=[0, width], y_range=[0, height], 
               update_interval=50, full_plot=full_plot)
 
@@ -131,7 +130,7 @@ if __name__=='__main__':
 
     
 
-    use_kalman_filter(dt, v_x, v_y, x_accel, y_accel, std_x, std_y, std_accel, t, actual, measurements, full_plot=False)
+    # use_kalman_filter(dt, v_x, v_y, x_accel, y_accel, std_x, std_y, std_accel, t, actual, measurements, full_plot=False)
 
-    # use_particle_filter(width, height, v_x, v_y, y_accel, std_x, std_y, t, actual, measurements, full_plot=False)
+    use_particle_filter(width, height, v_x, v_y, y_accel, std_x, std_y, t, actual, measurements, full_plot=False)
     
