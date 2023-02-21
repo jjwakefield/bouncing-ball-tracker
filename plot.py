@@ -82,10 +82,10 @@ class PlotParticleFilter(QtWidgets.QMainWindow):
           self.pf = pf
           self.timestep = 0
 
-          self.graphWidget = pg.PlotWidget()
-          self.graphWidget.setXRange(x_range[0], x_range[1])
-          self.graphWidget.setYRange(y_range[0], y_range[1])
-          self.setCentralWidget(self.graphWidget)
+          self.graph_widget = pg.PlotWidget()
+          self.graph_widget.setXRange(x_range[0], x_range[1])
+          self.graph_widget.setYRange(y_range[0], y_range[1])
+          self.setCentralWidget(self.graph_widget)
 
           self.actual = actual
           self.measurements = measurements
@@ -96,8 +96,8 @@ class PlotParticleFilter(QtWidgets.QMainWindow):
           self.actual_plot = np.array([[actual[0, 0], actual[0, 1]]])
           self.measurement_plot = np.array([[measurements[0, 0], measurements[0, 1]]])
 
-          self.graphWidget.setBackground('k')
-          self.graphWidget.addLegend(offset=(-1, 1))
+          self.graph_widget.setBackground('k')
+          self.graph_widget.addLegend(offset=(-1, 1))
           
           colour = lambda : random.randint(0, 255)
 
@@ -107,14 +107,14 @@ class PlotParticleFilter(QtWidgets.QMainWindow):
           for i in range(self.n_particles):
                self.particle_plots += [[particles[i][0]]]
                c = (colour(), colour(), colour())
-               line = self.graphWidget.plot([self.particle_plots[i][0][0]], [self.particle_plots[i][0][1]],
-                                             pen='c', symbol='o', symbolPen=c, symbolBrush=0.1, name=f'Particle {i+1}')
+               line = self.graph_widget.plot([self.particle_plots[i][0][0]], [self.particle_plots[i][0][1]],
+                                             pen='c', symbol='o', symbolPen=c, symbolBrush=0.1, name=f'p{i+1}')
                self.particle_lines.append(line)
 
-          self.measurement_scatter = self.graphWidget.plot(self.measurement_plot[:, 0], self.measurement_plot[:, 1], 
+          self.measurement_scatter = self.graph_widget.plot(self.measurement_plot[:, 0], self.measurement_plot[:, 1], 
                                                            pen=None, symbol='x', symbolPen='w', symbolBrush=1, name='Measurement')
 
-          self.actual_line =  self.graphWidget.plot(self.actual_plot[:, 0], self.actual_plot[:, 1], 
+          self.actual_line =  self.graph_widget.plot(self.actual_plot[:, 0], self.actual_plot[:, 1], 
                                                     pen='w', name='Actual')
           
 
@@ -142,12 +142,17 @@ class PlotParticleFilter(QtWidgets.QMainWindow):
                if self.count >= 25 and self.full_plot == False:
                     self.actual_plot = self.actual_plot[1:]
                     self.measurement_plot = self.measurement_plot[1:]
-
                self.count += 1
 
                self.pf.reweight(self.measurements[-1, :], self.timestep)
                self.pf.resample()
                self.timestep += 1
+
+               for i, line in enumerate(self.particle_lines):
+                    w = self.pf.weights[i]
+                    size = w * (100 - 10) + 10
+                    # size = np.abs((w - 10) / (40 - 10))
+                    line.setSymbolSize(size)
           except:
                pass
 
