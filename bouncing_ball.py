@@ -1,136 +1,99 @@
-from random import choice, randint
 import numpy as np
+import matplotlib.pyplot as plt
+from numpy.random import normal
 from kalman import KalmanFilter2D
-from particle_filter import ParticleFilter
-from plot import animated_plot_kalman
-from plot import animated_plot_particle
+
+# Set up the initial state of the ball
+pos = np.array([0, 10]) # Starting position
+vel = np.array([5, -9.81]) # Starting velocity
+acc = np.array([0, 9.81]) # Acceleration due to gravity
+energy_loss = 0.9 # Energy loss on collision
+dt = 0.01 # Time step
+
+x_range = [0, 10] # x range
+y_range = [0, 20] # y range
+offset = 2 # Offset for plotting
+
+std_x = 1.0 # Standard deviation of x measurement noise
+std_y = 1.0 # Standard deviation of y measurement noise
+std_accel = 10 # Standard deviation of acceleration noise
+n_iters = 100 # Number of iterations
 
 
+# Define the observation function
+def observe(pos):
+    # Simulate measurement noise
+    noise = [normal(scale=std_x), normal(scale=std_y)]
+    return pos + noise
 
-def compute_motion_data(width, height, t, v_x, v_y, y_accel, std_x, std_y, energy_loss, init_state):
-    # Initial state
-    x = init_state[0]
-    y = init_state[1]
-
-    path = np.zeros(shape=(t.shape[0], 2))
-    measurements = np.zeros(shape=(t.shape[0], 2))
-
-    for i in range(t.shape[0]):
-        path[i, 0] = x
-        path[i, 1] = y
-
-        # Add noise and measure ball's position
-        measurements[i, 0] = x + np.random.normal(0, std_x)
-        measurements[i, 1] = y + np.random.normal(0, std_y)
-
-        # Move ball
-        x += v_x
-        y += v_y
-
-        # Acceleration due to gravity
-        v_y += y_accel
-
-        # Check for collision with upper boundary
-        if y > height:
-            v_y = -v_y * energy_loss
-            # Set ball to ceiling level to avoid ball getting 'stuck'
-            y = height
-
-        # Check for collision with lower boundary
-        if y < 0:
-            v_y = -v_y * energy_loss
-            # Set ball to ground level to avoid ball getting 'stuck'
-            y = 0
-
-        # Check for collision with right wall
-        if x > width:
-            v_x = -v_x
-            x = width
-
-        # Check for collision with left wall
-        if x < 0:
-            v_x = -v_x
-            x = 0
-
-    return path, measurements
+# Define the transition function
+def transition(pos, vel, acc, dt):
+    # Apply gravity
+    vel = vel + acc * dt
+    # Update position
+    pos = pos + vel * dt
+    # Bounce off the ground or ceiling
+    if pos[1] < y_range[0] or pos[1] > y_range[1]:
+        vel[1] = -vel[1] * energy_loss
+    # Bounce off the walls
+    if pos[0] < x_range[0] or pos[0] > x_range[1]:
+        vel[0] = -vel[0] * energy_loss
+    return pos, vel
 
 
+positions = np.array([pos]) # True positions
+measurements = np.array([observe(pos)]) # Measured positions
+filtered = np.empty((0, 2)) # Filtered positions
 
-def use_kalman_filter(dt, v_x, v_y, x_accel, y_accel, std_x, std_y, std_accel, t, actual, measurements, full_plot):
-    init_state = np.array([[measurements[0, 0]], 
-                           [measurements[0, 1]],
-                           [v_x],
-                           [v_y]])
+# Set up the initial state of the Kalman filter
+init_state = np.array([[measurements[0, 0]],
+                       [measurements[0, 1]],
+                       [vel[0]],
+                       [vel[1]]])
 
-    kf = KalmanFilter2D(init_state=init_state, 
-                        dt=dt, 
-                        u_x=x_accel, u_y=y_accel, 
-                        std_accel=std_accel, 
-                        x_std_meas=std_x, y_std_meas=std_y)
-
-    filtered_est = np.zeros((t.shape[0], 2))
-
-    for i, z in enumerate(measurements):
-        # Predict
-        kf.predict()
-        # Update
-        z = np.vstack(z)
-        est = kf.update(z)
-        filtered_est[i] = est
-
-    animated_plot_kalman(actual, measurements, filtered_est, 
-              x_range=[0, width], y_range=[0, height], 
-              update_interval=50, full_plot=full_plot)
-    
+# Create the Kalman filter
+kf = KalmanFilter2D(init_state=init_state,
+                    dt=dt,
+                    u_x=acc[0], u_y=acc[1],
+                    std_accel=std_accel,
+                    x_std_meas=std_x, y_std_meas=std_y)
 
 
-def use_particle_filter(width, height, v_x, v_y, y_accel, std_x, std_y, t, actual, measurements, full_plot):
-    n_particles = 50
+# Run the simulation
+for i in range(1, n_iters):
+    # Move the ball
+    pos, vel = transition(pos, vel, acc, dt)
+    positions = np.concatenate((positions, np.array([pos])))
 
-    pf = ParticleFilter(n_particles, actual[0], std_x, std_y)
+    # Predict
+    kf.predict()
 
-    particle_paths = []
+    # Measure
+    measured_pos = observe(pos)
+    measurements = np.concatenate((measurements, np.array([measured_pos])))
 
-    for i in range(n_particles):
-        path, _ = compute_motion_data(width, height, t, v_x, v_y, y_accel, std_x, std_y, energy_loss, pf.particles[i])
-        particle_paths.append(path)
+    # Update
+    z = np.vstack(measured_pos)
+    est = kf.update(z)
+    filtered = np.concatenate((filtered, np.array([est])))
 
-    particle_paths = np.array(particle_paths)
-    pf.particles = particle_paths
+    # Plot the results
+    plt.clf()
+    plt.plot(positions[:, 0], positions[:, 1], 'r', lw=3, label='True') # True position
+    plt.scatter(measurements[:, 0], measurements[:, 1], c='b', marker='x', label='Measured') # Measured position
+    plt.plot(filtered[:, 0], filtered[:, 1], 'g', lw=3, label='Filtered') # Filtered position
+    plt.xlim([x_range[0] - offset, x_range[1] + offset])
+    plt.ylim([y_range[0] - offset, y_range[1] + offset])
+    plt.gca().invert_yaxis()
+    plt.legend()
+    plt.grid()
+    plt.title('Bouncing Ball')
+    plt.pause(0.01)
 
-    animated_plot_particle(actual, measurements, pf, 
-              x_range=[0, width], y_range=[0, height], 
-              update_interval=50, full_plot=full_plot)
+    # Remove old data to clean up the plot
+    if i >= 50:
+        positions = positions[1:]
+        measurements = measurements[1:]
+        filtered = filtered[1:]
 
-
-
-
-if __name__=='__main__':
-    width = 1200
-    height = 700
-
-    v_x = 7 * choice([-1, 1])
-    v_y = 10
-    
-    x_accel = 0
-    y_accel = -1
-
-    std_x = 20
-    std_y = 20
-    std_accel = 10
-
-    energy_loss = 0.9
-
-    dt = 0.1
-    t = np.arange(0, 50, dt)
-
-    init_state = np.array([randint(0, width), randint(height/2, height)])
-    
-    actual, measurements = compute_motion_data(width, height, t, v_x, v_y, y_accel, std_x, std_y, energy_loss, init_state)
-
-    
-
-    # use_kalman_filter(dt, v_x, v_y, x_accel, y_accel, std_x, std_y, std_accel, t, actual, measurements, full_plot=False)
-
-    use_particle_filter(width, height, v_x, v_y, y_accel, std_x, std_y, t, actual, measurements, full_plot=False)
-    
+plt.show()
